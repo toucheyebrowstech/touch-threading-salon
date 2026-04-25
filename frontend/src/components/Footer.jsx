@@ -55,12 +55,17 @@ export default function Footer() {
             <Link to="/reviews">Reviews</Link>
             <Link to="/contact">Contact</Link>
           </div>
-          <div className="mt-5 text-sm text-cream/75">
+                  <div className="mt-5 text-sm text-cream/75">
             {businessInfo.hours.map((row) => (
               <p key={row.day}><strong>{row.day}:</strong> {row.time}</p>
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="salon-container mt-10 border-t border-white/10 pt-5 text-center text-xs font-semibold tracking-wide text-cream/55">
+        Powered by Neptrixx
+        All rights reserved 2026
       </div>
     </footer>
   );
