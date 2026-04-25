@@ -42,21 +42,48 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
     setForm((prev) => ({ ...prev, service: serviceParam || prev.service || activeServices[0]?._id || '', staff: staffParam || prev.staff || activeStaff[0]?._id || '' }));
   }, [searchParams, activeServices, activeStaff]);
 
-  useEffect(() => {
+   useEffect(() => {
     let mounted = true;
+
     async function loadSlots() {
-      if (!form.date || !form.staff || !form.service) return;
+      if (!form.date || !form.staff || !form.service) {
+        setSlots([]);
+        return;
+      }
+
       try {
         setSlotsLoading(true);
-        const result = await salonApi.getAvailableSlots({ date: form.date, staffId: form.staff, serviceId: form.service });
-        if (mounted) setSlots(Array.isArray(result) ? result : []);
+
+        const result = await salonApi.getAvailableSlots({
+          date: form.date,
+          staffId: form.staff,
+          serviceId: form.service,
+        });
+
+        const normalizedSlots = Array.isArray(result)
+          ? result
+          : Array.isArray(result?.slots)
+            ? result.slots
+                .filter((slot) => slot?.available !== false)
+                .map((slot) => slot.time)
+            : [];
+
+        if (mounted) {
+          setSlots(normalizedSlots);
+        }
       } catch (err) {
-        if (mounted) setSlots([]);
+        if (mounted) {
+          setSlots([]);
+        }
       } finally {
-        if (mounted) setSlotsLoading(false);
+        if (mounted) {
+          setSlotsLoading(false);
+        }
       }
     }
+
     loadSlots();
+
     return () => {
       mounted = false;
     };
