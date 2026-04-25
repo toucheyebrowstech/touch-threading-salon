@@ -63,9 +63,22 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="salon-container mt-10 border-t border-white/10 pt-5 text-center text-xs font-semibold tracking-wide text-cream/55">
-        Powered by Neptrixx
-        All rights reserved 2026
+           <div className="salon-container mt-10 border-t border-white/10 pt-5 text-center text-xs font-semibold tracking-wide text-cream/55">
+        <p>
+          Powered by{' '}
+          <a
+            href="https://neptrixx.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cream/75 underline decoration-white/20 underline-offset-4 transition hover:text-gold hover:decoration-gold"
+          >
+            Neptrixx
+          </a>
+        </p>
+
+        <p className="mt-2 text-cream/45">
+          © {new Date().getFullYear()} Touch Threading & Brows Salon. All rights reserved.
+        </p>
       </div>
     </footer>
   );
