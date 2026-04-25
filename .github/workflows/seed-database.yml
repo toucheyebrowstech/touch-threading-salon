@@ -1,0 +1,43 @@
+# File: .github/workflows/seed-database.yml
+# Purpose: Runs the backend seed script from GitHub Actions so the MongoDB Atlas database can be filled for free.
+# Features: Manual workflow trigger, Node.js setup, backend dependency install, and npm run seed execution.
+# Used by: GitHub Actions tab in this repository.
+# Future edits: Change the Node version or command here if the backend seed command changes.
+
+name: Seed Touch Threading Database
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    name: Seed MongoDB Atlas
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      JWT_SECRET: seed_only_secret
+      ADMIN_EMAIL: admin@toucheyebrows.com
+      ADMIN_PASSWORD: seed_only_password
+      CLIENT_URL: https://toucheyebrows.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm install
+
+      - name: Run seed script
+        run: npm run seed
