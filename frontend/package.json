@@ -1,0 +1,26 @@
+{
+  "scriptsComment": "File: frontend/package.json | Purpose: Defines frontend dependencies and scripts for the public salon website | Features: Vite dev/build/preview commands | Used by: local development, Vercel build, and deployment | Future edits: update dependencies or scripts here.",
+  "name": "touch-threading-salon-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-router-dom": "latest",
+    "axios": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest"
+  }
+}

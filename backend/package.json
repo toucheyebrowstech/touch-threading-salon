@@ -1,0 +1,30 @@
+{
+  "scriptsComment": "File: backend/package.json | Purpose: Defines backend dependencies and scripts for Touch Threading and Brows Salon API | Features: dev/start/seed commands for Express, MongoDB, JWT auth, and salon data seeding | Used by: local development, Render deployment, and backend setup | Future edits: update dependencies, script names, or Node engine here.",
+  "name": "touch-threading-salon-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/seed/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

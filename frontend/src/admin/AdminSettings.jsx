@@ -1,0 +1,14 @@
+/**
+ * File name: src/admin/AdminSettings.jsx
+ * Purpose: Business settings manager for salon public website data.
+ * Contains: Salon name, address, phone, email, hours, social links, and save action.
+ * Used by: Route /admin/settings.
+ * Future edits: Add holidays, temporary closure notices, or SEO settings here.
+ */
+import { useEffect, useState } from 'react';
+import { adminApi, unwrap } from '../api/adminApi';
+import AdminPageHeader from '../components/AdminPageHeader.jsx';
+import FormField from '../components/FormField.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+const fallback={businessName:'Touch Threading and Brows Salon',address:'2150 N Josey Ln, Carrollton, Texas #109',phone:'',email:'',instagram:'',facebook:'',tiktok:'',mondaySaturdayHours:'9:00 AM - 7:00 PM',sundayHours:'11:00 AM - 6:00 PM'};
+export default function AdminSettings(){ const [form,setForm]=useState(fallback); const [loading,setLoading]=useState(true); const [saved,setSaved]=useState(false); useEffect(()=>{ adminApi.settings().then(r=>setForm({...fallback,...unwrap(r)})).finally(()=>setLoading(false)); },[]); async function save(e){ e.preventDefault(); setSaved(false); const payload={...form}; await adminApi.updateSettings(payload); setSaved(true); } if(loading) return <LoadingSpinner label="Loading settings..."/>; return <section><AdminPageHeader title="Business Settings" subtitle="Change business details used across the public website."/>{saved&&<div className="mb-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">Settings saved successfully.</div>}<form onSubmit={save} className="grid gap-4 rounded-3xl border border-blush bg-white p-5 shadow-soft md:grid-cols-2"><FormField label="Business Name" value={form.businessName||''} onChange={e=>setForm({...form,businessName:e.target.value})}/><FormField label="Phone" value={form.phone||''} onChange={e=>setForm({...form,phone:e.target.value})}/><FormField label="Email" value={form.email||''} onChange={e=>setForm({...form,email:e.target.value})}/><FormField label="Address" value={form.address||''} onChange={e=>setForm({...form,address:e.target.value})}/><FormField label="Monday - Saturday Hours" value={form.mondaySaturdayHours||''} onChange={e=>setForm({...form,mondaySaturdayHours:e.target.value})}/><FormField label="Sunday Hours" value={form.sundayHours||''} onChange={e=>setForm({...form,sundayHours:e.target.value})}/><FormField label="Instagram URL" value={form.instagram||''} onChange={e=>setForm({...form,instagram:e.target.value})}/><FormField label="Facebook URL" value={form.facebook||''} onChange={e=>setForm({...form,facebook:e.target.value})}/><FormField label="TikTok URL" value={form.tiktok||''} onChange={e=>setForm({...form,tiktok:e.target.value})}/><div className="md:col-span-2 flex justify-end"><button className="rounded-2xl bg-brown px-6 py-3 font-black text-white">Save Settings</button></div></form></section>; }

@@ -1,0 +1,88 @@
+/**
+ * File: frontend/src/styles/index.css
+ * Purpose: Global styling entry for the public salon website.
+ * Features: Tailwind layers, base body styling, reusable section spacing, soft gradients, and form polish.
+ * Used by: src/main.jsx and every public page/component.
+ * Future edits: Adjust global typography, spacing, animations, or shared utility classes here.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #4b2f28;
+  background: #fff8f0;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(248, 216, 212, 0.45), transparent 32rem),
+    linear-gradient(180deg, #fff8f0 0%, #ffffff 42%, #fff8f0 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.salon-container {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.salon-card {
+  border: 1px solid rgba(201, 139, 115, 0.22);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 20px 60px rgba(75, 47, 40, 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.salon-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(201, 139, 115, 0.32);
+  background: white;
+  padding: 0.85rem 1rem;
+  color: #4b2f28;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.salon-input:focus {
+  border-color: #c98b73;
+  box-shadow: 0 0 0 4px rgba(201, 139, 115, 0.16);
+}
+
+.salon-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4b2f28;
+}
+
+.gold-line {
+  height: 1px;
+  width: 5rem;
+  background: linear-gradient(90deg, transparent, #c9a24a, transparent);
+}

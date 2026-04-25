@@ -1,0 +1,15 @@
+/**
+ * File name: src/admin/AdminAppointments.jsx
+ * Purpose: Appointment management screen for salon owner.
+ * Contains: Appointment table, status controls, contact info, notes, refresh, and delete action.
+ * Used by: Route /admin/appointments.
+ * Future edits: Add calendar view, filters, or SMS/call integrations here.
+ */
+import { adminApi } from '../api/adminApi';
+import { useAdminResource } from '../hooks/useAdminResource';
+import { pillClass, shortDateTime, text } from '../utils/format';
+import AdminPageHeader from '../components/AdminPageHeader.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+const statuses=['pending','confirmed','completed','cancelled'];
+export default function AdminAppointments(){ const {data,loading,error,refresh}=useAdminResource(adminApi.appointments); async function status(id,value){ await adminApi.updateAppointmentStatus(id,value); refresh(); } async function remove(id){ if(confirm('Delete this appointment?')){ await adminApi.deleteAppointment(id); refresh(); } } return <section><AdminPageHeader title="Appointments" subtitle="Confirm, cancel, complete, or review every customer appointment."><button onClick={refresh} className="rounded-2xl bg-brown px-4 py-3 text-sm font-black text-white">Refresh</button></AdminPageHeader>{loading&&<LoadingSpinner/>}{error&&<EmptyState title="Could not load appointments" message={error}/>} {!loading&&!error&&data.length===0&&<EmptyState title="No appointments yet" message="New customer bookings will appear here."/>}{data.length>0&&<div className="overflow-hidden rounded-3xl border border-blush bg-white shadow-soft"><div className="overflow-x-auto"><table className="min-w-[1100px] w-full text-left text-sm"><thead className="bg-blush/50 text-xs uppercase tracking-wide text-brown"><tr><th className="p-4">Customer</th><th className="p-4">Service</th><th className="p-4">Worker</th><th className="p-4">Date/Time</th><th className="p-4">Status</th><th className="p-4">Notes</th><th className="p-4">Actions</th></tr></thead><tbody>{data.map(a=><tr key={a._id} className="border-t border-blush/70 align-top"><td className="p-4"><b>{text(a.customerName)}</b><p className="text-stone-500">{text(a.phone)}</p><p className="text-stone-500">{text(a.email)}</p></td><td className="p-4">{a.service?.name||a.serviceName||'—'}</td><td className="p-4">{a.staff?.name||a.workerName||'Any available'}</td><td className="p-4">{shortDateTime(a.dateTime || a.startTime || `${a.date}T${a.time}`)}</td><td className="p-4"><span className={`rounded-full px-3 py-1 text-xs font-black ${pillClass(a.status)}`}>{a.status}</span><select className="mt-2 block rounded-xl border border-blush px-2 py-2 text-xs" value={a.status} onChange={e=>status(a._id,e.target.value)}>{statuses.map(s=><option key={s} value={s}>{s}</option>)}</select></td><td className="p-4 max-w-xs text-stone-600">{text(a.notes,'No notes')}</td><td className="p-4"><button onClick={()=>remove(a._id)} className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-700">Delete</button></td></tr>)}</tbody></table></div></div>}</section>; }
