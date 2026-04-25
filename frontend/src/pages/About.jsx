@@ -34,7 +34,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="bg-white/65 py-16">
+        <section className="bg-white/65 py-16">
         <div className="salon-container">
           <SectionTitle eyebrow="Hygiene" title="Clean beauty matters" description="Threading and skincare are close-contact services. We care about clean tools, safe handling, tidy treatment areas, and a comfortable guest experience." />
           <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -44,6 +44,19 @@ export default function About() {
           </div>
         </div>
       </section>
+
+      <section className="py-14">
+        <div className="salon-container">
+          <div className="salon-card rounded-[2rem] bg-espresso p-7 text-center text-cream">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-gold">Powered by Neptrixx</p>
+            <p className="mx-auto mt-3 max-w-3xl leading-8 text-cream/78">
+              Touch Threading & Brows Salon uses Neptrixx-powered digital tools to make booking,
+              reviews, and customer updates faster and easier.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <FAQSection />
     </main>
   );
