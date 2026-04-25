@@ -16,6 +16,7 @@
  * - Formats money/prices
  * - Formats phone numbers safely
  * - Converts backend values into clean readable text
+ * - Provides admin status badge classes
  * ============================================================
  */
 
@@ -84,6 +85,23 @@ export function formatDateTime(value) {
   });
 }
 
+export function shortDateTime(value) {
+  if (!value) return "Not set";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function formatCurrency(value) {
   const amount = Number(value);
 
@@ -135,13 +153,13 @@ export function formatBoolean(value) {
 export function truncateText(value, maxLength = 80) {
   if (!value) return "";
 
-  const text = String(value);
+  const cleanText = String(value);
 
-  if (text.length <= maxLength) {
-    return text;
+  if (cleanText.length <= maxLength) {
+    return cleanText;
   }
 
-  return `${text.slice(0, maxLength).trim()}...`;
+  return `${cleanText.slice(0, maxLength).trim()}...`;
 }
 
 export function formatName(value) {
@@ -156,4 +174,43 @@ export function safeText(value, fallback = "Not provided") {
   }
 
   return String(value);
-} 
+}
+
+export function text(value, fallback = "Not provided") {
+  return safeText(value, fallback);
+}
+
+export function pillClass(value) {
+  const status = String(value || "").toLowerCase();
+
+  if (
+    status.includes("confirmed") ||
+    status.includes("approved") ||
+    status.includes("active") ||
+    status.includes("completed") ||
+    status.includes("published")
+  ) {
+    return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+  }
+
+  if (
+    status.includes("pending") ||
+    status.includes("new") ||
+    status.includes("waiting") ||
+    status.includes("draft")
+  ) {
+    return "bg-amber-100 text-amber-700 border border-amber-200";
+  }
+
+  if (
+    status.includes("cancelled") ||
+    status.includes("canceled") ||
+    status.includes("rejected") ||
+    status.includes("inactive") ||
+    status.includes("deleted")
+  ) {
+    return "bg-rose-100 text-rose-700 border border-rose-200";
+  }
+
+  return "bg-stone-100 text-stone-700 border border-stone-200";
+}
