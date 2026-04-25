@@ -142,7 +142,7 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
           <select className="salon-input" value={form.staff} onChange={(e) => update('staff', e.target.value)} required>
             <option value="">Any available worker</option>
             {activeStaff.map((worker) => (
-              <option key={worker._id} value={worker._id}>{worker.name} — {worker.role}</option>
+              <option key={worker._id} value={worker._id}>{worker.name} - {worker.role}</option>
             ))}
           </select>
         </label>
