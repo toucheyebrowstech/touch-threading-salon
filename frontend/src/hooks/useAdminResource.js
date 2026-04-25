@@ -1,9 +1,9 @@
 /**
  * ============================================================
  * File: frontend/src/hooks/useAdminResource.js
- * Purpose: Reusable admin dashboard hook for loading, creating,
- * updating, and deleting backend resources such as services,
- * offers, staff, appointments, reviews, and messages.
+ * Purpose: Reusable admin dashboard hook for loading backend
+ * resources such as services, offers, staff, appointments,
+ * reviews, and messages.
  *
  * Used by:
  * - AdminServices.jsx
@@ -14,48 +14,55 @@
  * - AdminMessages.jsx
  *
  * What this file does:
- * - Fetches resource data from the backend API
+ * - Supports adminApi functions like adminApi.appointments
+ * - Supports string resources like "appointments"
  * - Tracks loading and error state
- * - Provides create/update/delete helpers
+ * - Returns both `data` and `items` so existing admin pages work
  * - Keeps admin pages cleaner and easier to maintain
  * ============================================================
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { api } from "../api/adminApi";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_BACKEND_URL ||
-  "https://touch-threading-salon.onrender.com";
+function normalizeList(response) {
+  const payload = response?.data ?? response;
 
-function buildUrl(resource, id = "") {
-  const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
-  const cleanId = String(id || "").replace(/^\/+|\/+$/g, "");
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.appointments)) return payload.appointments;
+  if (Array.isArray(payload?.services)) return payload.services;
+  if (Array.isArray(payload?.offers)) return payload.offers;
+  if (Array.isArray(payload?.staff)) return payload.staff;
+  if (Array.isArray(payload?.reviews)) return payload.reviews;
+  if (Array.isArray(payload?.messages)) return payload.messages;
 
-  return cleanId
-    ? `${API_BASE}/api/${cleanResource}/${cleanId}`
-    : `${API_BASE}/api/${cleanResource}`;
+  return [];
 }
 
-async function parseResponse(response) {
-  const contentType = response.headers.get("content-type") || "";
-  const isJson = contentType.includes("application/json");
+function normalizeError(error) {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    "Unable to load data."
+  );
+}
 
-  const data = isJson ? await response.json() : await response.text();
-
-  if (!response.ok) {
-    const message =
-      typeof data === "object" && data !== null
-        ? data.message || data.error || "Request failed"
-        : data || "Request failed";
-
-    throw new Error(message);
+async function loadResource(resource) {
+  if (typeof resource === "function") {
+    return resource();
   }
 
-  return data;
+  const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
+  return api.get(`/${cleanResource}`);
 }
 
-export function useAdminResource(resource) {
+export function useAdminResource(resource, options = {}) {
+  const { autoLoad = true } = options;
+
+  const [data, setData] = useState([]);
   const [items, setItems] = useState([]);
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -63,25 +70,27 @@ export function useAdminResource(resource) {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    if (!resource) return;
+    if (!resource) return [];
 
     setLoading(true);
     setError("");
 
     try {
-      const data = await fetch(buildUrl(resource)).then(parseResponse);
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data?.items)
-            ? data.items
-            : [];
+      const response = await loadResource(resource);
+      const list = normalizeList(response);
 
+      setData(list);
       setItems(list);
+
+      return list;
     } catch (err) {
-      setError(err.message || "Unable to load data.");
+      const message = normalizeError(err);
+
+      setError(message);
+      setData([]);
       setItems([]);
+
+      return [];
     } finally {
       setLoading(false);
     }
@@ -95,11 +104,22 @@ export function useAdminResource(resource) {
       setError("");
 
       try {
-        const data = await fetch(buildUrl(resource, id)).then(parseResponse);
-        setItem(data);
-        return data;
+        let response;
+
+        if (typeof resource === "function") {
+          const listResponse = await loadResource(resource);
+          const list = normalizeList(listResponse);
+          response = list.find((entry) => entry?._id === id || entry?.id === id) || null;
+        } else {
+          const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
+          response = await api.get(`/${cleanResource}/${id}`);
+          response = response?.data ?? response;
+        }
+
+        setItem(response);
+        return response;
       } catch (err) {
-        setError(err.message || "Unable to load item.");
+        setError(normalizeError(err));
         return null;
       } finally {
         setLoading(false);
@@ -110,24 +130,18 @@ export function useAdminResource(resource) {
 
   const create = useCallback(
     async (payload) => {
-      if (!resource) return null;
+      if (!resource || typeof resource === "function") return null;
 
       setSaving(true);
       setError("");
 
       try {
-        const data = await fetch(buildUrl(resource), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload || {}),
-        }).then(parseResponse);
-
+        const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
+        const response = await api.post(`/${cleanResource}`, payload || {});
         await load();
-        return data;
+        return response?.data ?? response;
       } catch (err) {
-        setError(err.message || "Unable to create item.");
+        setError(normalizeError(err));
         return null;
       } finally {
         setSaving(false);
@@ -138,24 +152,18 @@ export function useAdminResource(resource) {
 
   const update = useCallback(
     async (id, payload) => {
-      if (!resource || !id) return null;
+      if (!resource || !id || typeof resource === "function") return null;
 
       setSaving(true);
       setError("");
 
       try {
-        const data = await fetch(buildUrl(resource, id), {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload || {}),
-        }).then(parseResponse);
-
+        const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
+        const response = await api.patch(`/${cleanResource}/${id}`, payload || {});
         await load();
-        return data;
+        return response?.data ?? response;
       } catch (err) {
-        setError(err.message || "Unable to update item.");
+        setError(normalizeError(err));
         return null;
       } finally {
         setSaving(false);
@@ -166,20 +174,18 @@ export function useAdminResource(resource) {
 
   const remove = useCallback(
     async (id) => {
-      if (!resource || !id) return false;
+      if (!resource || !id || typeof resource === "function") return false;
 
       setSaving(true);
       setError("");
 
       try {
-        await fetch(buildUrl(resource, id), {
-          method: "DELETE",
-        }).then(parseResponse);
-
+        const cleanResource = String(resource || "").replace(/^\/+|\/+$/g, "");
+        await api.delete(`/${cleanResource}/${id}`);
         await load();
         return true;
       } catch (err) {
-        setError(err.message || "Unable to delete item.");
+        setError(normalizeError(err));
         return false;
       } finally {
         setSaving(false);
@@ -189,10 +195,11 @@ export function useAdminResource(resource) {
   );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (autoLoad) load();
+  }, [autoLoad, load]);
 
   return {
+    data,
     items,
     item,
     loading,
@@ -204,8 +211,11 @@ export function useAdminResource(resource) {
     create,
     update,
     remove,
+    setData,
     setItems,
     setItem,
     setError,
   };
 }
+
+export default useAdminResource;
