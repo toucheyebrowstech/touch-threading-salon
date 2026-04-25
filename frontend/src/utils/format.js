@@ -1,216 +1,108 @@
 /**
  * ============================================================
- * File: frontend/src/utils/format.js
- * Purpose: Shared formatting helpers for the public website and
- * admin dashboard.
+ * 📁 File: frontend/src/utils/format.js
+ * 🧩 Purpose: Shared frontend formatting helpers.
  *
  * Used by:
- * - AdminOverview.jsx
- * - AdminAppointments.jsx
- * - AdminMessages.jsx
- * - AdminReviews.jsx
- * - Appointment and contact display sections
+ *   - Admin pages
+ *   - Appointment tables
+ *   - Review tables
+ *   - Service price display
  *
- * What this file does:
- * - Formats dates and times
- * - Formats money/prices
- * - Formats phone numbers safely
- * - Converts backend values into clean readable text
- * - Provides admin status badge classes
+ * Includes:
+ *   - money()              → formats prices like $25
+ *   - shortDate()          → formats date only
+ *   - shortDateTime()      → formats date + time
+ *   - text()               → fallback text formatter
+ *   - pillClass()          → status badge class helper
  * ============================================================
  */
 
-export function formatDate(value) {
-  if (!value) return "Not set";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-export function formatTime(value) {
-  if (!value) return "Not set";
-
-  if (typeof value === "string" && /^\d{1,2}:\d{2}/.test(value)) {
-    const [hourRaw, minuteRaw] = value.split(":");
-    const hour = Number(hourRaw);
-    const minute = Number(minuteRaw || 0);
-
-    if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
-      const date = new Date();
-      date.setHours(hour, minute, 0, 0);
-
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    }
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function formatDateTime(value) {
-  if (!value) return "Not set";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function shortDateTime(value) {
-  if (!value) return "Not set";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function formatCurrency(value) {
-  const amount = Number(value);
-
-  if (Number.isNaN(amount)) {
-    return "$0";
-  }
+export function money(value) {
+  const number = Number(value || 0);
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
-  }).format(amount);
+    maximumFractionDigits: Number.isInteger(number) ? 0 : 2,
+  }).format(number);
 }
 
-export function formatPrice(value) {
-  return formatCurrency(value);
+export function shortDate(value) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
-export function formatPhone(value) {
-  if (!value) return "Not provided";
+export function shortDateTime(value) {
+  if (!value) return "—";
 
-  const digits = String(value).replace(/\D/g, "");
+  const date = new Date(value);
 
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
+  if (Number.isNaN(date.getTime())) return "—";
 
-  if (digits.length === 11 && digits.startsWith("1")) {
-    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-
-  return String(value);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
-export function formatStatus(value) {
-  if (!value) return "Unknown";
+export function text(value, fallback = "—") {
+  if (value === null || value === undefined) return fallback;
 
-  return String(value)
-    .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .trim()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const cleaned = String(value).trim();
+
+  return cleaned.length ? cleaned : fallback;
 }
 
-export function formatBoolean(value) {
-  return value ? "Yes" : "No";
-}
-
-export function truncateText(value, maxLength = 80) {
-  if (!value) return "";
-
-  const cleanText = String(value);
-
-  if (cleanText.length <= maxLength) {
-    return cleanText;
-  }
-
-  return `${cleanText.slice(0, maxLength).trim()}...`;
-}
-
-export function formatName(value) {
-  if (!value) return "Guest";
-
-  return String(value).trim() || "Guest";
-}
-
-export function safeText(value, fallback = "Not provided") {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-
-  return String(value);
-}
-
-export function text(value, fallback = "Not provided") {
-  return safeText(value, fallback);
-}
-
-export function pillClass(value) {
-  const status = String(value || "").toLowerCase();
+export function pillClass(status = "") {
+  const normalized = String(status).toLowerCase().trim();
 
   if (
-    status.includes("confirmed") ||
-    status.includes("approved") ||
-    status.includes("active") ||
-    status.includes("completed") ||
-    status.includes("published")
+    normalized.includes("approved") ||
+    normalized.includes("active") ||
+    normalized.includes("confirmed") ||
+    normalized.includes("completed") ||
+    normalized.includes("success")
   ) {
-    return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+    return "pill pill-success";
   }
 
   if (
-    status.includes("pending") ||
-    status.includes("new") ||
-    status.includes("waiting") ||
-    status.includes("draft")
+    normalized.includes("pending") ||
+    normalized.includes("waiting") ||
+    normalized.includes("scheduled")
   ) {
-    return "bg-amber-100 text-amber-700 border border-amber-200";
+    return "pill pill-warning";
   }
 
   if (
-    status.includes("cancelled") ||
-    status.includes("canceled") ||
-    status.includes("rejected") ||
-    status.includes("inactive") ||
-    status.includes("deleted")
+    normalized.includes("cancel") ||
+    normalized.includes("reject") ||
+    normalized.includes("failed") ||
+    normalized.includes("inactive")
   ) {
-    return "bg-rose-100 text-rose-700 border border-rose-200";
+    return "pill pill-danger";
   }
 
-  return "bg-stone-100 text-stone-700 border border-stone-200";
+  return "pill";
 }
+
+export default {
+  money,
+  shortDate,
+  shortDateTime,
+  text,
+  pillClass,
+};
