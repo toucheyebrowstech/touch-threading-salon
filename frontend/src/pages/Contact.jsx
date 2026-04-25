@@ -6,7 +6,7 @@
  * Future edits: Add real Google Maps iframe, updated contact details, or live chat widget here.
  */
 
-import { Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { Camera as Instagram, Globe as Facebook, Mail, MapPin, Phone } from "lucide-react";
 import ContactForm from '../components/ContactForm';
 import SectionTitle from '../components/SectionTitle';
 import { businessInfo } from '../data/fallbackData';
