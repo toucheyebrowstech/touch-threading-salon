@@ -6,8 +6,7 @@
  * Future edits: Update phone, email, social URLs, or footer service links here.
  */
 
-import { Facebook, Instagram, MapPin, Phone, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Camera as Instagram, Globe as Facebook, MapPin, Phone, Sparkles } from "lucide-react";import { Link } from 'react-router-dom';
 import { businessInfo } from '../data/fallbackData';
 
 export default function Footer() {
