@@ -25,10 +25,51 @@ const initialForm = {
   notes: ''
 };
 
+function normalizeSlots(result) {
+  if (Array.isArray(result)) {
+    return result.map((slot) => {
+      if (typeof slot === 'string') {
+        return {
+          time: slot,
+          available: true,
+          reason: ''
+        };
+      }
+
+      return {
+        time: slot.time,
+        available: slot.available !== false,
+        reason: slot.reason || ''
+      };
+    });
+  }
+
+  if (Array.isArray(result?.slots)) {
+    return result.slots.map((slot) => {
+      if (typeof slot === 'string') {
+        return {
+          time: slot,
+          available: true,
+          reason: ''
+        };
+      }
+
+      return {
+        time: slot.time,
+        available: slot.available !== false,
+        reason: slot.reason || ''
+      };
+    });
+  }
+
+  return [];
+}
+
 export default function AppointmentForm({ compact = false, services = fallbackServices, staff = fallbackStaff }) {
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState(initialForm);
   const [slots, setSlots] = useState([]);
+  const [slotsMessage, setSlotsMessage] = useState('');
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ type: '', message: '' });
@@ -43,45 +84,43 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
     setForm((prev) => ({
       ...prev,
       service: serviceParam || prev.service || activeServices[0]?._id || '',
-      staff: staffParam || prev.staff || ''
+      staff: staffParam || prev.staff || activeStaff[0]?._id || ''
     }));
-  }, [searchParams, activeServices]);
+  }, [searchParams, activeServices, activeStaff]);
 
-   useEffect(() => {
+  useEffect(() => {
     let mounted = true;
 
     async function loadSlots() {
-      if (!form.date || !form.service) {
-        setSlots([]);
+      if (!form.date || !form.staff || !form.service) {
+        if (mounted) {
+          setSlots([]);
+          setSlotsMessage('');
+        }
         return;
       }
 
       try {
         setSlotsLoading(true);
+        setSlotsMessage('');
 
         const result = await salonApi.getAvailableSlots({
           date: form.date,
           staffId: form.staff,
-          serviceId: form.service,
+          serviceId: form.service
         });
 
-           const normalizedSlots = Array.isArray(result)
-          ? result.map((slot) => (typeof slot === 'string' ? { time: slot, available: true, reason: '' } : slot))
-          : Array.isArray(result?.slots)
-            ? result.slots.map((slot) => (typeof slot === 'string' ? { time: slot, available: true, reason: '' } : slot))
-            : [];
-
         if (mounted) {
-          setSlots(normalizedSlots);
+          setSlots(normalizeSlots(result));
+          setSlotsMessage(result?.message || '');
         }
       } catch (err) {
         if (mounted) {
           setSlots([]);
+          setSlotsMessage(err?.response?.data?.message || 'Could not check available times.');
         }
       } finally {
-        if (mounted) {
-          setSlotsLoading(false);
-        }
+        if (mounted) setSlotsLoading(false);
       }
     }
 
@@ -93,23 +132,43 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
   }, [form.date, form.staff, form.service]);
 
   const update = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value, ...(field === 'date' || field === 'staff' || field === 'service' ? { time: '' } : {}) }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === 'date' || field === 'staff' || field === 'service' ? { time: '' } : {})
+    }));
+
     setToast({ type: '', message: '' });
   };
 
   const submit = async (event) => {
     event.preventDefault();
+
     if (!form.time) {
       setToast({ type: 'error', message: 'Please select an available time slot.' });
       return;
     }
+
     try {
       setSubmitting(true);
       const result = await salonApi.createAppointment(form);
-      setToast({ type: 'success', message: result.message || 'Appointment request received. We will confirm it soon.' });
-      setForm({ ...initialForm, service: form.service, staff: form.staff, date: formatDateForInput() });
+
+      setToast({
+        type: 'success',
+        message: result.message || 'Appointment request received. We will confirm it soon.'
+      });
+
+      setForm({
+        ...initialForm,
+        service: form.service,
+        staff: form.staff,
+        date: formatDateForInput()
+      });
     } catch (err) {
-      setToast({ type: 'error', message: err?.response?.data?.message || 'Could not book appointment. Please check your details and try again.' });
+      setToast({
+        type: 'error',
+        message: err?.response?.data?.message || 'Could not book appointment. Please check your details and try again.'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -118,63 +177,132 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
   return (
     <form onSubmit={submit} className={`salon-card rounded-[2rem] ${compact ? 'p-5' : 'p-6 md:p-8'}`}>
       <Toast type={toast.type} message={toast.message} />
+
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label>
           <span className="salon-label">Customer name</span>
-          <input className="salon-input" value={form.customerName} onChange={(e) => update('customerName', e.target.value)} required placeholder="Your full name" />
+          <input
+            className="salon-input"
+            value={form.customerName}
+            onChange={(e) => update('customerName', e.target.value)}
+            required
+            placeholder="Your full name"
+          />
         </label>
+
         <label>
           <span className="salon-label">Phone number</span>
-          <input className="salon-input" value={form.phone} onChange={(e) => update('phone', e.target.value)} required placeholder="(972) 555-0123" />
+          <input
+            className="salon-input"
+            value={form.phone}
+            onChange={(e) => update('phone', e.target.value)}
+            required
+            placeholder="(972) 555-0123"
+          />
         </label>
+
         <label>
           <span className="salon-label">Email</span>
-          <input className="salon-input" type="email" value={form.email} onChange={(e) => update('email', e.target.value)} required placeholder="you@example.com" />
+          <input
+            className="salon-input"
+            type="email"
+            value={form.email}
+            onChange={(e) => update('email', e.target.value)}
+            required
+            placeholder="you@example.com"
+          />
         </label>
+
         <label>
           <span className="salon-label">Service</span>
-          <select className="salon-input" value={form.service} onChange={(e) => update('service', e.target.value)} required>
+          <select
+            className="salon-input"
+            value={form.service}
+            onChange={(e) => update('service', e.target.value)}
+            required
+          >
             <option value="">Select service</option>
             {activeServices.map((service) => (
-              <option key={service._id} value={service._id}>{service.name} - ${service.price}</option>
+              <option key={service._id} value={service._id}>
+                {service.name} - ${service.price}
+              </option>
             ))}
           </select>
         </label>
+
         <label>
-            <label>
           <span className="salon-label">Preferred worker</span>
-          <select className="salon-input" value={form.staff} onChange={(e) => update('staff', e.target.value)}>
+          <select
+            className="salon-input"
+            value={form.staff}
+            onChange={(e) => update('staff', e.target.value)}
+            required
+          >
             <option value="">Any available worker</option>
             {activeStaff.map((worker) => (
-              <option key={worker._id} value={worker._id}>{worker.name} - {worker.role}</option>
+              <option key={worker._id} value={worker._id}>
+                {worker.name} — {worker.role}
+              </option>
             ))}
           </select>
         </label>
+
         <label>
           <span className="salon-label">Date</span>
-          <input className="salon-input" type="date" min={formatDateForInput()} value={form.date} onChange={(e) => update('date', e.target.value)} required />
+          <input
+            className="salon-input"
+            type="date"
+            min={formatDateForInput()}
+            value={form.date}
+            onChange={(e) => update('date', e.target.value)}
+            required
+          />
         </label>
       </div>
 
       <div className="mt-5">
         <span className="salon-label">Available time slots</span>
-        <TimeSlotPicker slots={slots} value={form.time} onChange={(value) => update('time', value)} loading={slotsLoading} disabled={!form.date || !form.service} />
 
-        <p className="mt-3 rounded-2xl bg-blush/45 p-4 text-sm font-semibold leading-6 text-cocoa/72">
-          Don’t see your preferred time? Call us to check same-day availability. Another worker may be free, or a cancellation may have opened.
+        <TimeSlotPicker
+          slots={slots}
+          value={form.time}
+          onChange={(value) => update('time', value)}
+          loading={slotsLoading}
+          disabled={!form.date || !form.staff || !form.service}
+        />
+
+        {slotsMessage ? (
+          <p className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800">
+            {slotsMessage}
+          </p>
+        ) : null}
+
+        <p className="mt-3 rounded-2xl bg-cream p-4 text-sm leading-6 text-cocoa/72">
+          If your preferred time is already taken, please call the salon. Sometimes another worker may still be available,
+          or a customer may cancel or not show up.
         </p>
       </div>
 
       <label className="mt-5 block">
         <span className="salon-label">Notes</span>
-        <textarea className="salon-input min-h-28" value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Tell us anything helpful. Example: first visit, sensitive skin, combo request..." />
+        <textarea
+          className="salon-input min-h-28"
+          value={form.notes}
+          onChange={(e) => update('notes', e.target.value)}
+          placeholder="Tell us anything helpful. Example: first visit, sensitive skin, combo request..."
+        />
       </label>
 
       <p className="mt-5 rounded-2xl bg-cream p-4 text-sm leading-6 text-cocoa/72">
-        Walk-ins are welcome, but appointments help you avoid waiting. Please call the salon if you need to cancel or reschedule.
+        Walk-ins are welcome, but appointments help you avoid waiting. Please call the salon if you need to cancel or
+        reschedule.
       </p>
 
-      <button disabled={submitting} className="mt-6 w-full rounded-full bg-espresso px-6 py-4 font-bold text-white shadow-salon disabled:cursor-not-allowed disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={submitting}
+        className="mt-6 w-full rounded-full bg-espresso px-6 py-4 font-bold text-white shadow-salon disabled:cursor-not-allowed disabled:opacity-60"
+      >
         {submitting ? 'Booking...' : 'Submit Appointment Request'}
       </button>
     </form>
