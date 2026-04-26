@@ -73,9 +73,9 @@ export default function TimeSlotPicker({ slots = [], value, onChange, loading, d
           >
             <span className="block">{formatSlotTime(slot.time)}</span>
 
-            {isDisabled && (
+              {isUnavailable && (
               <span className="mt-1 block text-[10px] uppercase tracking-wide">
-                {slot.reason || 'Unavailable'}
+                Unavailable
               </span>
             )}
           </button>
