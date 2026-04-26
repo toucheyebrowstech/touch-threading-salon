@@ -67,7 +67,7 @@ export default function TimeSlotPicker({ slots = [], value, onChange, loading, d
               isSelected
                 ? 'border-espresso bg-espresso text-white'
                 : isDisabled
-                  ? 'cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400 opacity-75'
+                 ? 'cursor-not-allowed border-stone-200 bg-stone-100 text-stone-500 opacity-100'
                   : 'border-rosegold/25 bg-white text-cocoa hover:bg-blush/40'
             }`}
           >
