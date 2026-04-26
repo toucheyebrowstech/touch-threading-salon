@@ -13,6 +13,7 @@ import Staff from '../models/Staff.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { isValidEmail, isValidPhone, normalizeDateOnly, requireFields } from '../utils/validators.js';
 import { buildTimeSlots, ensureNoDuplicateAppointment, findAvailableStaffForSlot, isWithinBusinessHours } from '../utils/availability.js';
+import { sendAppointmentEmails } from '../utils/email.js';
 import { getOrCreateSettings } from './settingsController.js';
 
 const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || ''));
@@ -87,7 +88,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     }
   }
 
-  const appointment = await Appointment.create({
+   const appointment = await Appointment.create({
     customerName: req.body.customerName,
     phone: req.body.phone,
     email: req.body.email,
@@ -100,6 +101,10 @@ export const createAppointment = asyncHandler(async (req, res) => {
     durationMinutes,
     notes: req.body.notes || '',
     status: 'Pending'
+  });
+
+  sendAppointmentEmails({ appointment }).catch((error) => {
+    console.error('[appointments] Email notification failed:', error.message);
   });
 
   res.status(201).json({ message: 'Appointment request received. We will confirm it soon.', appointment });
