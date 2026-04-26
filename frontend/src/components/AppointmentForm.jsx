@@ -39,14 +39,19 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
   useEffect(() => {
     const serviceParam = searchParams.get('service');
     const staffParam = searchParams.get('staff');
-    setForm((prev) => ({ ...prev, service: serviceParam || prev.service || activeServices[0]?._id || '', staff: staffParam || prev.staff || activeStaff[0]?._id || '' }));
-  }, [searchParams, activeServices, activeStaff]);
+
+    setForm((prev) => ({
+      ...prev,
+      service: serviceParam || prev.service || activeServices[0]?._id || '',
+      staff: staffParam || prev.staff || ''
+    }));
+  }, [searchParams, activeServices]);
 
    useEffect(() => {
     let mounted = true;
 
     async function loadSlots() {
-      if (!form.date || !form.staff || !form.service) {
+      if (!form.date || !form.service) {
         setSlots([]);
         return;
       }
@@ -60,12 +65,10 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
           serviceId: form.service,
         });
 
-        const normalizedSlots = Array.isArray(result)
-          ? result
+           const normalizedSlots = Array.isArray(result)
+          ? result.map((slot) => (typeof slot === 'string' ? { time: slot, available: true, reason: '' } : slot))
           : Array.isArray(result?.slots)
-            ? result.slots
-                .filter((slot) => slot?.available !== false)
-                .map((slot) => slot.time)
+            ? result.slots.map((slot) => (typeof slot === 'string' ? { time: slot, available: true, reason: '' } : slot))
             : [];
 
         if (mounted) {
@@ -138,8 +141,9 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
           </select>
         </label>
         <label>
+            <label>
           <span className="salon-label">Preferred worker</span>
-          <select className="salon-input" value={form.staff} onChange={(e) => update('staff', e.target.value)} required>
+          <select className="salon-input" value={form.staff} onChange={(e) => update('staff', e.target.value)}>
             <option value="">Any available worker</option>
             {activeStaff.map((worker) => (
               <option key={worker._id} value={worker._id}>{worker.name} - {worker.role}</option>
@@ -154,7 +158,11 @@ export default function AppointmentForm({ compact = false, services = fallbackSe
 
       <div className="mt-5">
         <span className="salon-label">Available time slots</span>
-        <TimeSlotPicker slots={slots} value={form.time} onChange={(value) => update('time', value)} loading={slotsLoading} disabled={!form.date || !form.staff || !form.service} />
+        <TimeSlotPicker slots={slots} value={form.time} onChange={(value) => update('time', value)} loading={slotsLoading} disabled={!form.date || !form.service} />
+
+        <p className="mt-3 rounded-2xl bg-blush/45 p-4 text-sm font-semibold leading-6 text-cocoa/72">
+          Don’t see your preferred time? Call us to check same-day availability. Another worker may be free, or a cancellation may have opened.
+        </p>
       </div>
 
       <label className="mt-5 block">
