@@ -3,16 +3,28 @@
  * Purpose: Displays one salon service with price, duration, description, and booking CTA.
  * Features: Category label, formatted price, duration badge, description, and Book button.
  * Used by: Home service preview, Services page, and QuickBook section.
- * Future edits: Change service card styling or add service icons here.
+ * Future edits: Change service card styling or update service photography here.
  */
 
+import { getServiceImage } from '../data/serviceImages';
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../utils/formatters';
 
 export default function ServiceCard({ service }) {
   return (
-    <article className="salon-card flex h-full flex-col rounded-[2rem] p-5 transition hover:-translate-y-1">
+    <article className="salon-card flex h-full flex-col overflow-hidden rounded-[2rem] p-5 transition hover:-translate-y-1">
+      {getServiceImage(service) ? (
+        <img
+          src={getServiceImage(service)}
+          alt={`${service.name} treatment illustration`}
+          width="768"
+          height="512"
+          loading="lazy"
+          decoding="async"
+          className="mb-5 aspect-[3/2] w-full rounded-[1.4rem] object-cover"
+        />
+      ) : null}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-rosegold">{service.category}</p>
